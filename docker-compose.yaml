@@ -1,0 +1,54 @@
+services:
+  health-be:
+    build: .
+    image: health-be
+    container_name: health-backend
+    volumes:
+      - ./Makefile:/Makefile
+    ports:
+      - 8000:8000
+    networks:
+      - some-net
+    restart: always
+    healthcheck:
+      test: curl --fail http://localhost:8000/api/healthz || exit 1
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    labels:
+      # health-backend-app: true
+      autoheal: true
+
+  health-fe:
+    build: .
+    image: health-fe
+    container_name: health-frontend
+    volumes:
+      - ./Makefile:/Makefile
+    ports:
+      - 80:80
+    networks:
+      - some-net
+    restart: always
+    healthcheck:
+      test: curl --fail http://localhost:80/api/healthz || exit 1
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    labels:
+      # health-backend-app: true
+      autoheal: true
+
+  autoheal:
+    restart: always
+    image: willfarrell/autoheal
+    # environment:
+    #   - AUTOHEAL_CONTAINER_LABEL=health-backend-app
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    
+networks:
+  some-net:
+    driver: bridge
